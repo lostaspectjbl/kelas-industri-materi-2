@@ -33,6 +33,12 @@ export default function HomePage() {
             <li className="hover:text-indigo-600 cursor-pointer">
               <Link href="/user">Tabel User</Link>
             </li>
+            <li key="image-process" className="hover:text-indigo-600 cursor-pointer">
+              <Link href="/image-process">Image Process</Link>
+            </li>
+            <li key="image-sprite" className="hover:text-indigo-600 cursor-pointer">
+              <Link href="/sprite">Sprite-Image</Link>
+            </li>
           </ul>
         </aside>
 
