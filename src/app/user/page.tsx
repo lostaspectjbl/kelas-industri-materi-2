@@ -31,15 +31,37 @@ export default function UserPage() {
     //state tabel user 
     const [isLoading, setIsLoading] = React.useState(false); 
     const [selectedQR, setSelectedQR] = useState<User | null>(null);
-    const page = Number(searchParams.get("page")) || 1;
 
-    //logic pagination
+    //1. state untuk pencarian dan debounce
+    const [searchQuery, setSearchQuery] = useState("");
+    const [debounceQuery, setDebounceQuery] = useState("");
+
+    //2. filter data pencarian
+    const filteredUsers = dummyUser.filter((user) => {
+        const query = debounceQuery.toLowerCase();
+        return(
+            user.name.toLowerCase().includes(query) ||
+            user.email.toLowerCase().includes(query) ||
+            user.role.toLowerCase().includes(query) 
+        )
+    })
+
+
+    //3. logic pagination
+    const page = Number(searchParams.get("page")) || 1;
     const startIndex = (page - 1) * ITEMS_PER_PAGE;
     const endIndex = startIndex + ITEMS_PER_PAGE;
-    const currentData = dummyUser.slice(startIndex, endIndex);
-    const totalPages = Math.ceil(dummyUser.length / ITEMS_PER_PAGE);
+    const currentData = filteredUsers.slice(startIndex, endIndex);
+    const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
 
-    //efek loading saar halaman berubah
+    //4. reset halaman ke satu saat search berubah
+    useEffect(() => {
+        if (page !== 1) {
+            router.push(`/user?page=1`);
+        }
+    }, [debounceQuery]);
+
+    //5. efek loading saar halaman berubah
     useEffect(() => {
         setIsLoading(true);
         const timer = setTimeout(() => {
@@ -47,7 +69,7 @@ export default function UserPage() {
         }, 500);//simulate loading 500ms
 
         return () => clearTimeout(timer);
-    }, [page]);
+    }, [page, debounceQuery]);
 
     //fungsi navigasi pagination
     const handlePageChange = (newPage: number) => {
@@ -70,6 +92,15 @@ export default function UserPage() {
         setSelectedQR(null);
     }
 
+    //debounce Effect
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebounceQuery(searchQuery);
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
     return (
         <div className="min-h-screen bg-gray-100 p-8 font-sans">
             <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-md p-6">
@@ -80,6 +111,19 @@ export default function UserPage() {
                     <Link href="/" className="text-indigo-600 hover:underline text-sm">
                        &larr; Kembali Ke Home
                     </Link>
+                </div>
+
+                {/* pencarian */}
+                <div className="mb-4">
+                    <input 
+                        type="text"
+                        placeholder="Cari Berdasarkan nama, email, ateu role...." 
+                        className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        value={searchQuery}
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                        }}
+                    />
                 </div>
 
                 {/* Tabel User */}
