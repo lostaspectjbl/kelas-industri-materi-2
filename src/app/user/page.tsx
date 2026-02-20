@@ -11,6 +11,8 @@ type User = {
     id: number;
     name: string;
     email: string;
+    kelas: string;
+    tanggal_lahir: string;
     role: "Admin" | "Siswa";
 }
 
@@ -19,6 +21,8 @@ const dummyUser : User[] = Array.from({length: 20}, (_, i) => ({
     id: i + 1,
     name: `User ${i + 1}`,
     email: `user${i + 1}@sekolah.com`,
+    kelas: `Kelas ${((i % 6) + 1)}`,
+    tanggal_lahir: `200${i % 10}-0${(i % 9) + 1}-15`,
     role: i % 3 === 0 ? "Admin" : "Siswa",
 }));
 
@@ -32,6 +36,16 @@ export default function UserPage() {
     const [isLoading, setIsLoading] = React.useState(false); 
     const [selectedQR, setSelectedQR] = useState<User | null>(null);
 
+    //State Untuk Tombol Filter
+    const [showFilter, setShowFilter] = useState(false);
+    const [kelasFilter, setKelasFilter] = useState<string | null>(null);
+    const [roleFilter, setRoleFilter] = useState<string | null>(null);
+    const [tanggalLahirAwal, setTanggalLahirAwal] = useState<string | null>(null);
+    const [tanggalLahirAkhir, setTanggalLahirAkhir] = useState<string | null>(null);
+
+    //reset filter
+    const [resetFilters, setResetFilters] = useState(false);
+
     //1. state untuk pencarian dan debounce
     const [searchQuery, setSearchQuery] = useState("");
     const [debounceQuery, setDebounceQuery] = useState("");
@@ -39,11 +53,24 @@ export default function UserPage() {
     //2. filter data pencarian
     const filteredUsers = dummyUser.filter((user) => {
         const query = debounceQuery.toLowerCase();
-        return(
+        const matchQuery = 
             user.name.toLowerCase().includes(query) ||
             user.email.toLowerCase().includes(query) ||
-            user.role.toLowerCase().includes(query) 
-        )
+            user.kelas.toLowerCase().includes(query) ||
+            user.tanggal_lahir.toLowerCase().includes(query) ||
+            user.role.toLowerCase().includes(query);
+
+        const matchKelas = kelasFilter ? user.kelas === kelasFilter : true;
+        const matchRole = roleFilter ? user.role === roleFilter : true;
+        const matchTanggalLahir = 
+            tanggalLahirAwal && tanggalLahirAkhir
+                ? user.tanggal_lahir >= tanggalLahirAwal && user.tanggal_lahir <= tanggalLahirAkhir
+                : true;
+        if (!matchKelas || !matchRole || !matchTanggalLahir) {
+            return false;
+        }
+
+        return matchQuery;
     })
 
 
@@ -92,6 +119,15 @@ export default function UserPage() {
         setSelectedQR(null);
     }
 
+    //logikan reset
+    const handleResetFilters = () => {
+        setKelasFilter(null);
+        setRoleFilter(null);
+        setTanggalLahirAwal(null);
+        setTanggalLahirAkhir(null);
+        setResetFilters(true);
+    }
+
     //debounce Effect
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -115,15 +151,79 @@ export default function UserPage() {
 
                 {/* pencarian */}
                 <div className="mb-4">
-                    <input 
-                        type="text"
-                        placeholder="Cari Berdasarkan nama, email, ateu role...." 
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        value={searchQuery}
-                        onChange={(e) => {
-                            setSearchQuery(e.target.value);
-                        }}
-                    />
+                    <div className="flex gap-2">
+                        <input 
+                            type="text"
+                            placeholder="Cari Berdasarkan nama, email, ateu role...." 
+                            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            value={searchQuery}
+                            onChange={(e) => {
+                                setSearchQuery(e.target.value);
+                            }}
+                        />
+                        <button onClick={() => setShowFilter(!showFilter)} className="bg-gray-100 px-4 rounded-md">Filter</button>
+                    </div>
+                    {/* Tampilkan Filter */}
+                    {showFilter && (
+                        <div className="mt-2 p-4 rounded-lg bg-gray-50">
+                            <div className="grid grid-cols-4 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Kelas</label>
+                                    <select 
+                                        className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                                        value={kelasFilter || ""}
+                                        onChange={(e) => setKelasFilter(e.target.value || null)}
+                                    >
+                                        <option value="">Semua</option>
+                                        {[...Array(6)].map((_, i) => (
+                                            <option key={i} value={`Kelas ${i + 1}`}>{`Kelas ${i + 1}`}</option>
+                                        ))}
+
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Role</label>
+                                    <select 
+                                        className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                                        value={roleFilter || ""}
+                                        onChange={(e) => setRoleFilter(e.target.value || null)}
+                                    >
+                                        <option value="">Semua</option>
+                                        <option value="Admin">Admin</option>
+                                        <option value="Siswa">Siswa</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Tanggal Lahir Awal</label>
+                                    <input 
+                                        type="date" 
+                                        className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                                        value={tanggalLahirAwal || ""}
+                                        onChange={(e) => setTanggalLahirAwal(e.target.value || null)}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Tanggal Lahir Akhir</label>
+                                    <input 
+                                        type="date" 
+                                        className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                                        value={tanggalLahirAkhir || ""}
+                                        onChange={(e) => setTanggalLahirAkhir(e.target.value || null)}
+                                    />
+                                </div>
+                                <div>
+                                    <div className="mt-4">
+                                        <button 
+                                            onClick={handleResetFilters}
+                                            className="w-full bg-red-500 text-white px-4 py-2 rounded"
+                                        >
+                                            Reset Filter
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Tabel User */}
@@ -135,6 +235,8 @@ export default function UserPage() {
                                 <th className="p-4 border-b">ID</th>
                                 <th className="p-4 border-b">Nama Lengkap</th>
                                 <th className="p-4 border-b">Email</th>
+                                <th className="p-4 border-b">Kelas</th>
+                                <th className="p-4 border-b">Tanggal Lahir</th>
                                 <th className="p-4 border-b">Role</th>
                                 <th className="p-4 border-b">QR Code</th>
                             </tr>
@@ -148,6 +250,8 @@ export default function UserPage() {
                                     <td className="p-4">{user.id}</td>
                                     <td className="p-4 font-semibold text-gray-900">{user.name}</td>
                                     <td className="p-4">{user.email}</td>
+                                    <td className="p-4">{user.kelas}</td>
+                                    <td className="p-4">{user.tanggal_lahir}</td>
                                     <td className="p-4">
                                         <span className={`px-2 py-1 rounded-full ${user.role === "Admin" ? "bg-red-200 text-red-800" : "bg-green-200 text-green-800"}`}>
                                             {user.role}
