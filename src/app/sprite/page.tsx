@@ -17,7 +17,7 @@ export default function SpritePage() {
     const [selectedIcon, setSelectedIcon] = useState<Icon | null>(null);
 
     const sosialIcon: Icon[] = [
-        { name: "BMW 1", col: 0, row: 0, offsetX: 45, offsetY: 45, color:"#ffffff"},
+        { name: "BMW 1", col: 0, row: 0, offsetX: 34, offsetY: 35, color:"#ffffff"},
         { name: "BMW 2", col: 1, row: 0, offsetX: 20, offsetY: 45, color:"#ffffff"},
         { name: "BMW 3", col: 2, row: 0, offsetX: -5, offsetY: 45, color:"#ffffff"},
         { name: "BMW 4", col: 3, row: 0, offsetX: -25, offsetY: 45, color:"#ffffff"},

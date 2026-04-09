@@ -39,6 +39,9 @@ export default function HomePage() {
             <li key="image-sprite" className="hover:text-indigo-600 cursor-pointer">
               <Link href="/sprite">Sprite-Image</Link>
             </li>
+            <li key="analytics" className="hover:text-indigo-600 cursor-pointer">
+              <Link href="/analytic-dashboard">Analytic Dashboard</Link>
+            </li>
           </ul>
         </aside>
 
