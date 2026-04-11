@@ -4,6 +4,7 @@ import React, {useState, useEffect} from 'react'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,  } from 'recharts';
 import { Calendar, RefreshCw, Maximize2, Minimize2, Users, DollarSign, ShoppingCart, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
+import { stat } from 'node:fs/promises';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
 
@@ -83,7 +84,7 @@ export default function AnalyticDashboard() {
     const [barData, setBarData] = useState<BarDatum[]>([]);
     const [lineData, setLineData] = useState<LineDatum[]>([]);
     const [pieData, setPieData] = useState<PieDatum[]>([]);
-    const [stats, setStats] = useState<Stats | null>(null);
+    const [statsData, setStatsData] = useState<Stats | null>(null);
 
     //Load data saat filter berubah
     useEffect(() => {
@@ -95,13 +96,243 @@ export default function AnalyticDashboard() {
             setBarData(data.bar);
             setLineData(data.line);
             setPieData(data.pie);
-            setStats(data.stats);
+            setStatsData(data.stats);
             setIsLoading(false);
         }, 500);
     }, [dateFilter]);
 
-    //stats card data dengan data 
+    //stats card data dengan data dinamis
+    const stats = [
+        { title: 'Total Users', value: statsData?.users ?? 0, icon: Users, bgColor: 'bg-blue-500', change: '+5.2%' },
+        { title: 'Total Revenue', value: `$${statsData?.revenue ?? 0}`, icon: DollarSign, bgColor: 'bg-green-500', change: '+3.8%' },
+        { title: 'Total Orders', value: statsData?.orders ?? 0, icon: ShoppingCart, bgColor: 'bg-yellow-500', change: '+4.1%' },
+        { title: 'Growth Rate', value: `${statsData?.growth ?? 0}%`, icon: TrendingUp, bgColor: 'bg-red-500', change: '+2.7%' },
+    ]
+
+    //auto refresh dengan countdown
+    useEffect(() => {
+        if (!autoRefresh) return;
+
+        const interval = setInterval(() => {
+            setCountdown((prev) => {
+                if (prev === 1) {
+                    //refresh data
+                    const data = generateDataByFilter(dateFilter);
+                    setBarData(data.bar);
+                    setLineData(data.line);
+                    setPieData(data.pie);
+                    setStatsData(data.stats);
+                    return 60; //reset countdown
+                }
+                return prev -1
+            });
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [autoRefresh, dateFilter]);
+
+    //manual refresh
+    const handleManualRefresh = () => {
+        setIsLoading(true);
+        setTimeout(() => {
+            const data = generateDataByFilter(dateFilter);
+            setBarData(data.bar);
+            setLineData(data.line);
+            setPieData(data.pie);
+            setStatsData(data.stats);
+            setIsLoading(false);
+            setCountdown(60); //reset countdown
+        }, 500);
+    }
+
+    //handle filter changes
+    const handleFilterChange = (filterValue: FilterOption) => {
+        setDateFilter(filterValue);
+        setCountdown(60); //reset countdown
+    }
+
+    //fullscreen chart
+    const FullscreenChart: React.FC<{type: 'bar' | 'line' | 'pie'; onClose: () => void}> = ({ type, onClose}) => (
+        <div className='fixed insert-0 bg-black/80 z-50 flex item-center justify-center p-4' onClick={onClose}>
+            <div className='bg-white rounded-lg p-6 w-full max-w-6xl h-[90vh]' onClick={(e) => e.stopPropagation()}>
+                <div className='flex justify-between items-center mb-4 '>
+                    <h2 className='text-2xl font-bold text-gray-800'>
+                        {type === 'bar' && 'Monthly Performence'}
+                        {type === 'line' && 'Weekly Trends'}
+                        {type === 'pie' && 'Distribution By Category'}
+                    </h2>
+                    <button onClick={onClose} className='p-2 hover:bg-gray-100 rounded-lg '>
+                        <Minimize2 size={24}/>
+                    </button>
+                </div>
+                <div className='h-[calc(100%-80px)]'>
+                    <ResponsiveContainer width="100%" height="100%">
+                        {type === 'bar' && (
+                            <BarChart data={barData}>
+                                <CartesianGrid strokeDasharray="3 3"/>
+                                <XAxis dataKey="name" />
+                                <YAxis />
+                                <Tooltip />
+                                <Legend />
+                                <Bar dataKey="value" fill="#3b82f6" name="Actual" />
+                                <Bar dataKey="value" fill="#10b981" name="Target" />
+                            </BarChart>
+                        )}
+
+                        {type === 'line' && (
+                            <LineChart data={lineData}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="name" />
+                                <YAxis />
+                                <Tooltip />
+                                <Legend />
+                                <Line type="monotone" dataKey="sales" stroke="#3b82f6" name="Sales"/>
+                                <Line type="monotone" dataKey="revenue" stroke="#10b981" name="Revenue"/>
+                            </LineChart>
+                        )}
+
+                        {type === 'pie' && (
+                            <PieChart>
+                                <Pie
+                                    data={pieData}
+                                    cx="50%"
+                                    cy="50%"
+                                    labelLine={true}
+                                    label={(props:any) => `${props.name ?? ''}: ${((props.percent ?? 0) *100).toFixed(0)}%`}
+                                    outerRadius={200}
+                                    fill="#88848d"
+                                    dataKey="value"
+                                >
+                                    {pieData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip />
+                            </PieChart>
+                        )}
+                    </ResponsiveContainer>
+                </div>
+            </div>
+        </div>
+    );
+
     return (
-        <div></div>
+        <div className='min-h-screen bg-gray-100 p-4 md:p-8'>
+            <div className="max-w-7xl mx-auto">
+                {/* Header */}
+                <div className="bg-white rounded-lg shadow md p-6 mb-6">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div>
+                            <h1 className='text-3xl font-bold text-gray-800'>Analytic Dashboard</h1>
+                            <p className='text-gray-500 mt-1'>Real Time Analytics</p>
+                            <p className='text-sm text-blue-600 mt-1'>
+                                Viewing data for: <strong>{FILTER_OPTIONS.find(f => f.value === dateFilter)?.label}</strong>
+                            </p>
+                        </div>
+                        <div className="flex items-center mt-4 md:mt-0">
+                            <Link href="/" className='text-sm text-indigo-800 hover:underline'>
+                                &larr; Kembali Ke Home
+                            </Link>
+                        </div>
+                    </div>
+
+                    {/* Filter Dan Control */}
+                    <div className="mt-6 flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+                        {/* Date Filter */}
+                        <div className="flex items-center gap-2 flex-warp">
+                            <Calendar className='text-gray-500' size={20} />
+                            {FILTER_OPTIONS.map((option) => (
+                                <button
+                                    key={option.value}
+                                    onClick={() => handleFilterChange(option.value)}
+                                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                                        dateFilter === option.value
+                                            ? 'bg-blue-600 text-white shadow-md'
+                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                    }`}
+                                >
+                                    {option.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Auto Refresh */}
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                            <label className='text-sm-text-gray-600'> Auto Refresh</label>
+                            <button
+                                onClick={() => setAutoRefresh(!autoRefresh)}
+                                className={`relative w-12 h-6 rounded-full transition ${autoRefresh ? 'bg-blue-600' : 'bg-gray-300'}`}
+                            >
+                                <span
+                                    className={`absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${autoRefresh ? 'translate-x-6' : 'translate-x-0'}`}
+                                ></span>
+                            </button>
+                        </div>
+
+                        {autoRefresh && (
+                            <span className='text-sm text-gray-500 font-mono'>
+                                {countdown}s
+                            </span>
+                        )}
+
+                        <button
+                            onClick={handleManualRefresh}
+                            disabled={isLoading}
+                            className='flex items-center fap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition disabled:opacity-50'
+                        >
+                            <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''}/>
+                            <span className='hidden sm:inline'>Refresh</span>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Stats Card */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg grid-cols-4 gap-6 mb-6">
+                    {stats.map((stat, index) => (
+                        <div key={index} className='bg-white rounded-lg shadow-md p-6 transform transition hover-scale-105'>
+                            <div className='flex items-center justify-between'>
+                                <div>
+                                    <p className='text-gray-500 text-sm'>{stat.title}</p>
+                                    <p className='text-2xl font-bold text-gray-600 mt-1'>{stat.value}</p>
+                                    <p className='text-green-600 text-sm mt-1'>{stat.change}</p>
+                                </div>
+                                <div className={`${stat.bgColor} p-3 rounded-lg`}>
+                                    <stat.icon className="text-white" size={24} />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Charts Selection */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    {/* Bar Charts */}
+                    <div className="bg-white rounded-lg shadow-md p-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className='text-xl font-bold text-gray-800'> Monthly Performance</h2>
+                            <button
+                                onClick={() => setFullscreenChart('bar')}
+                                className='p-2 hover:bg-gray-100 rounded-lg transition'
+                            >
+                                <Maximize2 size={20} className='text-gray-600'/>
+                            </button>
+                        </div>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <BarChart data={barData}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="name" />
+                                <YAxis />
+                                <Tooltip />
+                                <Legend />
+                                <Bar dataKey="value" fill='#3b82f6' name="Actual"/>
+                                <Bar dataKey="value" fill='#10b981' name="Target"/>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            </div>
+        </div>
     )
 }
