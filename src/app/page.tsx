@@ -42,6 +42,9 @@ export default function HomePage() {
             <li key="analytics" className="hover:text-indigo-600 cursor-pointer">
               <Link href="/analytic-dashboard">Analytic Dashboard</Link>
             </li>
+            <li key="map" className="hover:text-indigo-600 cursor-pointer">
+              <Link href="/penanganan-map">Penanganan Map</Link>
+            </li>
           </ul>
         </aside>
 
