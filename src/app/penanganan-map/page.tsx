@@ -79,5 +79,5 @@ export default function PenangananMapPage() {
                 </div>
             </div>
         </div>
-    );
+    )
 }
