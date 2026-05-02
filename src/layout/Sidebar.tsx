@@ -26,7 +26,9 @@ export default function Sidebar({
     {key: "image-process", label: "Image Process", href: "/image-process"},
     {key: "sprite", label: "Sprite Image", href: "/sprite"},
     {key: "analytics", label: "Analytic Dashboard", href: "/analytic-dashboard"},
-    {key: "map", label: "Penangana Map", href: "/penanganan-map"}
+    {key: "map", label: "Penangana Map", href: "/penanganan-map"},
+    {key: "web-storage", label: "Web Storage", href: "/web-storage"},
+    {key: "indexdb", label: "IndexDB", href: "/indexdb"}
   ],
   className = "",
   isOpen = true,
