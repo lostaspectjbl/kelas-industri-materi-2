@@ -28,7 +28,8 @@ export default function Sidebar({
     {key: "analytics", label: "Analytic Dashboard", href: "/analytic-dashboard"},
     {key: "map", label: "Penangana Map", href: "/penanganan-map"},
     {key: "web-storage", label: "Web Storage", href: "/web-storage"},
-    {key: "indexdb", label: "IndexDB", href: "/indexdb"}
+    {key: "indexdb", label: "IndexDB", href: "/indexdb"},
+    {key: "realtime-db", label: "Realtime DB", href: "/realtime-db"}
   ],
   className = "",
   isOpen = true,
