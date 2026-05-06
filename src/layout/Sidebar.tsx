@@ -22,11 +22,11 @@ export default function Sidebar({
     {key: "dashboard", label: "Dashboard", active: true},
     {key: "settings", label: "Settings"},
     {key: "profile", label: "Profile"},
-    {key: "users", label: "Tabel Users", href: "/users"},
+    {key: "users", label: "Tabel Users", href: "/user"},
     {key: "image-process", label: "Image Process", href: "/image-process"},
     {key: "sprite", label: "Sprite Image", href: "/sprite"},
     {key: "analytics", label: "Analytic Dashboard", href: "/analytic-dashboard"},
-    {key: "map", label: "Penangana Map", href: "/penanganan-map"},
+    {key: "map", label: "Penanganan Map", href: "/penanganan-map"},
     {key: "web-storage", label: "Web Storage", href: "/web-storage"},
     {key: "indexdb", label: "IndexDB", href: "/indexdb"},
     {key: "realtime-db", label: "Realtime DB", href: "/realtime-db"}

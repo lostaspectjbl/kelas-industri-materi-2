@@ -19,6 +19,23 @@ export default function IndexDBPage() {
     //inisialisasi supabase
     useEffect(() => {
         loadTodos();
+
+        //Subscribe ke perubahan realtime
+        const channel = supabase
+            .channel('todos-changes')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'todos'},
+                (payload) => {
+                    console.log('Changes received!', payload);
+                    loadTodos();
+                }
+            )
+            .subscribe();
+        
+        return () => {
+            supabase.removeChannel(channel);
+        }
     }, []);
 
     //load semua todo dari indexdb
@@ -60,6 +77,7 @@ export default function IndexDBPage() {
                 .from('todos')
                 .update({ completed: currentStatus })
                 .eq('id', id)
+            if (error) throw error;
         } catch (error) {
             console.error('Error toggling todo: ', error);
         }
@@ -72,6 +90,7 @@ export default function IndexDBPage() {
                 .from('todos')
                 .delete()
                 .eq('id', id)
+            if (error) throw error;
         } catch (error) {
             console.error('Error deleting todo: ', error);
         }
@@ -83,6 +102,8 @@ export default function IndexDBPage() {
             const { error } = await supabase
                 .from('todos')
                 .delete()
+                .neq("id", 0)
+            if (error) throw error;
         } catch (error) {
             console.error('Error clearing todo: ', error);
         }
