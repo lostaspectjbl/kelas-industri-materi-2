@@ -1,13 +1,8 @@
-"use client";
-
-import { useState } from "react";
+import { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-import Header from "@/layout/Header";
-import Sidebar from "@/layout/Sidebar";
-import Footer from "@/layout/Footer";
-
+import ClientLayoutWrapper from "@/layout/ClientLayoutWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,34 +14,24 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const metadata: Metadata = {
+  title: "NextJs V2 - Web dengan nextjs 16",
+  description: "Hehehehehehehehehehe"
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
-  const closeSidebar = () => {
-    setSidebarOpen(false);
-  };
+  
 
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <div className="flex min-h-screen">
-          <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
-          <div className="flex flex-col flex-1">
-            <Header brandName="MyApp" onBrandClick={toggleSidebar} />
-            <main className="flex-1 p-6 bg-gray-50">{children}</main>
-            <Footer />
-          </div>
-        </div>
+        <ClientLayoutWrapper>{children}</ClientLayoutWrapper>
       </body>
     </html>
   );

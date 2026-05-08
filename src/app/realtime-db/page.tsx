@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { useNotification } from "@/layout/NotificationComponents";
 
 interface Todo {
     id: number;
@@ -14,6 +15,20 @@ export default function IndexDBPage() {
     const [todos, setTodos] = useState<Todo[]>([]);
     const [newTodo, setNewTodo] = useState("");
     const [loading, setLoading] = useState(true);
+    const [permissionRequested, setPermissionRequested] = useState(false);
+
+    const { sendNotification, requestPermission, isPermissionGranted} = useNotification();
+
+    //request permission notifikasi saat pertama kali load
+    useEffect(() => {
+        const askPermission = async () => {
+            if (!permissionRequested && !isPermissionGranted()) {
+                await requestPermission();
+                setPermissionRequested(true)
+            }
+        };
+        askPermission();
+    }, [isPermissionGranted, permissionRequested, requestPermission]);
 
 
     //inisialisasi supabase
@@ -103,11 +118,26 @@ export default function IndexDBPage() {
                 .from('todos')
                 .delete()
                 .neq("id", 0)
+
             if (error) throw error;
+
+            await sendNotification({
+                title: 'All Todos Cleared',
+                body: 'All Todos Item Have been deleted',
+                redirectUrl: '/realtime-db'
+            })
         } catch (error) {
             console.error('Error clearing todo: ', error);
         }
     };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-500 to-blue-500">
+                <p className="text-gray-500 text-lg">Loading todos...</p>
+            </div>
+        );
+    }
 
 
     return(
@@ -115,7 +145,13 @@ export default function IndexDBPage() {
             <div className="max-w-3xl mx-auto space-y-6">
                 {/* Header */}
                 <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 rounded-xl shadow-lg">
-                    <h1 className="text-3xl font-bold">Todo List with Supabase</h1>
+                    <h1 className="text-3xl font-bold">Todo List with Supabase dan Send notifikasi</h1>
+                    <p className="text-sm md:text-base mt-2">
+                        {isPermissionGranted()
+                            ? "Notifikasi diizinkan"
+                            : "Notifikasi tidak diizinkan. Silahkan izinkan notifikasi untuk menerima pembaruan pesan realtime"
+                        }
+                    </p>
                 </div>
 
                 {/* Input Form */}
